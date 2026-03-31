@@ -1,0 +1,13 @@
+{
+  "name": "ai-assisted-billiards-drills",
+  "version": "1.0.0",
+  "description": "AI-assisted billiards training platform",
+  "private": true,
+  "scripts": {
+    "test:all": "pnpm -r test"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

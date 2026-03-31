@@ -1,0 +1,12 @@
+{
+  "name": "@billiards/shared",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}
