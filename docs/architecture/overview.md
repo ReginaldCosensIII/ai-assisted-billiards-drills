@@ -59,8 +59,8 @@ The platform is a desktop-first, AI-assisted projection system for billiards tra
 - Providing a "Simulator-First" environment where all logic can be validated visually in a headless or multi-window workstation setup.
 
 ## 5. Local versus Cloud Responsibilities
-- **Local (Workstation)**: Real-time UI, window placement, projection rendering, calibration state, local video/media playback.
-- **Cloud (Managed Services)**: User accounts, global drill library updates, AI inference (LLM/STT/TTS), and long-term data backup.
+- **Local (Workstation)**: Real-time UI, window placement, projection rendering, calibration state, local video/media playback. Early Version 1 builds are designed to be local-first, where core drill workflows function without relying on external accounts or global sync.
+- **Cloud (Managed Services)**: Considered optional extensions for the earliest working builds. Over time, cloud workflows will support user accounts, global drill library updates, long-term data backup, and connections to managed AI and voice providers (pending final platform selection).
 
 ## 6. Major Data Flows
 1. **Selection**: User selects Drill -> App requests Drill Data from Backend -> Backend Fetches from DB.

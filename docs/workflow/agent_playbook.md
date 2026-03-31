@@ -57,6 +57,17 @@
 - **Review**: Human review is mandatory for all architectural changes and major implementation milestones.
 - **Low-Quality Prevention**: If an agent hits repeated failures, it must stop, document the blocker, and ask for human clarification rather than guessing.
 
+### 5.1. Blocker Escalation Rules
+- If an implementation agent encounters a normal coding issue, bug, or test failure within the approved task boundary, it should continue working and resolve it.
+- If an implementation agent encounters a blocker that would require changing approved scope, an accepted ADR, a cross-system interface, the data model direction, or the expected user workflow, it must stop and escalate.
+
+### 5.2. Edge-Case Design Deviation Handling
+- If an implementation agent identifies a small local improvement that does not change approved architecture, it may propose it in the task report, but should not silently broaden scope.
+- If a deviation affects API boundaries, database schema direction, desktop window model, AI workflow, voice workflow, or core drill behavior, it must be escalated before implementation continues.
+
+### 5.3. Testing Expectations From the Beginning of the Lifecycle
+- Unit testing should be expected from the beginning of implementation, especially for logic with high regression risk such as coordinate transforms, drill rendering rules, calibration math, AI context assembly, and stateful workflow logic.
+
 ## 6. Repository Hygiene
 - **Branches**: Multi-agent work should happen on specific feature or task branches (e.g., `feat/auth`, `task/calibration`).
 - **Commits**: Atomic commits with clear descriptions.
