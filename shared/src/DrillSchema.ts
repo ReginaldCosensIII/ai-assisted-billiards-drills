@@ -25,7 +25,7 @@ export const DrillSchema = z.object({
   difficulty: z.number().int().min(1).max(5),
   table_compatibility: z.array(z.string()).min(1),
   layout: DrillLayoutSchema,
-  success_criteria: z.union([z.string(), z.record(z.any())]),
+  success_criteria: z.union([z.string(), z.record(z.string(), z.any())]),
   coaching_notes: z.array(z.string()),
   version: z.string(),
   author_id: z.string(),

@@ -1,14 +1,36 @@
-## Pull Request
+## Pull Request Overview
 
 **Description:**
-<!-- Briefly describe the purpose of this PR. What phase/task does this complete? -->
-
-**Checklist:**
-- [ ] Code follows the phase constraints (e.g., no feature code during foundation phase).
-- [ ] Related documentation has been updated.
-- [ ] Commits are clean and follow the imperative style guidelines.
-- [ ] Any new architectural decisions have an ADR in `docs/adrs/`.
-- [ ] Passed the `Definition of Done` (see `docs/workflow/definition_of_done.md`).
-
 **Related Issues / Tasks:**
-<!-- Link to any relevant task IDs, session logs, or phase objectives. -->
+---
+
+## Scope of Work
+*Check all workspaces that apply:*
+- [ ] `app/` (Electron / React / Vite / UI)
+- [ ] `backend/` (Fastify / Prisma / API)
+- [ ] `shared/` (Schemas / Math / Domain Logic)
+- [ ] `docs/` (Architecture / ADRs / Playbooks)
+- [ ] `root/` (Tooling / CI / Workspace Config)
+
+## Type of Change
+- [ ] ✨ New Feature
+- [ ] 🐛 Bug Fix
+- [ ] ♻️ Refactor / Tech Debt
+- [ ] 🏗️ Architecture / Infrastructure
+- [ ] 📝 Documentation Update
+
+---
+
+## Testing & Verification
+- **Automated Tests:** - **Manual UI/App Verification:** - **Backend/DB Verification:** ---
+
+## Pre-Merge Checklist
+*Review the [Definition of Done](docs/workflow/definition_of_done.md) before submitting.*
+- [ ] I have run `pnpm -r typecheck` and no errors exist across the workspace.
+- [ ] I have run `pnpm -r test` and all unit/integration tests pass.
+- [ ] Code follows the current phase constraints (no out-of-bounds feature work).
+- [ ] Any new architectural decisions are documented in a new ADR in `docs/adrs/`.
+- [ ] Existing documentation (Architecture diagrams, Data Models) has been updated to reflect these changes.
+- [ ] Commits are clean, descriptive, and follow the imperative style guidelines.
+
+## Screenshots / Screen Recordings (If Applicable)
