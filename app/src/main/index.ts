@@ -73,6 +73,13 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('sync-calibration-corners', (_event, corners) => {
+    // Relay calibration corners to the projector window
+    if (projectorWindow && !projectorWindow.isDestroyed()) {
+      projectorWindow.webContents.send('update-calibration-corners', corners);
+    }
+  });
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
