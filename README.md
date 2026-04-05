@@ -1,6 +1,6 @@
 # ai-assisted-billiards-drills
 
-> **Status: Foundation Setup — No product features should be implemented yet.**
+> **Status: Prototype Complete — Core projection, calibration, and database persistence are implemented.**
 
 This repository is the initial scaffold for a desktop-first billiards drill projection platform with future AI-assisted coaching capabilities.
 
@@ -27,9 +27,11 @@ This is **not** a place for:
 | `tests/`    | Integration and end-to-end test suites               |
 | `tooling/`  | Build tools, linters, and configuration utilities    |
 
-## Contributing
+## Getting Started
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
+See the [Local Development Guide](docs/local-development.md) for detailed instructions on setting up your environment, booting the database, and running the application.
+
+## Contributing
 
 ---
 
