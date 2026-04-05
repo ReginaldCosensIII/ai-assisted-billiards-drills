@@ -6,6 +6,7 @@ import { calculatePerspectiveTransform } from '../utils/perspective-math';
 export default function ProjectorView() {
   const [layout, setLayout] = useState<Drill['layout'] | null>(null);
   const [corners, setCorners] = useState<CalibrationCorners | null>(null);
+  const [feedback, setFeedback] = useState<'pass' | 'fail' | null>(null);
 
   useEffect(() => {
     // Subscribe to layout updates from the Main process
@@ -17,9 +18,16 @@ export default function ProjectorView() {
       setCorners(updatedCorners);
     });
 
+    const unsubscribeFeedback = window.api.onAttemptFeedback((outcome: 'pass' | 'fail') => {
+      setFeedback(outcome);
+      // Clear feedback after 1.5 seconds
+      setTimeout(() => setFeedback(null), 1500);
+    });
+
     return () => {
       unsubscribeLayout();
       unsubscribeCorners();
+      unsubscribeFeedback();
     };
   }, []);
 
@@ -62,6 +70,16 @@ export default function ProjectorView() {
     };
   }
 
+  const feedbackStyle: React.CSSProperties = feedback 
+    ? {
+        boxShadow: `inset 0 0 100px 50px ${feedback === 'pass' ? 'rgba(76, 175, 80, 0.4)' : 'rgba(244, 67, 54, 0.4)'}`,
+        transition: 'box-shadow 0.2s ease-in-out'
+      } 
+    : {
+        boxShadow: 'inset 0 0 0px 0px transparent',
+        transition: 'box-shadow 1s ease-out'
+      };
+
   return (
     <div style={{ 
       width: '100vw', 
@@ -69,7 +87,7 @@ export default function ProjectorView() {
       backgroundColor: '#000', 
       overflow: 'hidden' 
     }}>
-      <div style={{ width: '100%', height: '100%', ...transformStyle }}>
+      <div style={{ width: '100%', height: '100%', ...transformStyle, ...feedbackStyle }}>
         <VirtualTable layout={layout} width={window.innerWidth} height={window.innerHeight} />
       </div>
     </div>

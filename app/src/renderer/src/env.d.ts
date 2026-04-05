@@ -9,6 +9,8 @@ declare global {
       onDrillLayoutUpdate: (callback: (layout: Drill['layout']) => void) => () => void;
       sendCalibrationCorners: (corners: CalibrationCorners) => void;
       onCalibrationCornersUpdate: (callback: (corners: CalibrationCorners) => void) => () => void;
+      sendAttemptFeedback: (outcome: 'pass' | 'fail') => void;
+      onAttemptFeedback: (callback: (outcome: 'pass' | 'fail') => void) => () => void;
     }
   }
 }
