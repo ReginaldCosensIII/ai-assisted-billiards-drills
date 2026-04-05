@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Drill } from '@billiards/shared';
 import VirtualTable from './components/VirtualTable';
 import ProjectorView from './components/ProjectorView';
+import CalibrationView from './components/CalibrationView';
 
 export default function App() {
   const [drills, setDrills] = useState<Drill[]>([]);
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
   const [error, setError] = useState('');
+  const [uiMode, setUiMode] = useState<'drills' | 'calibration'>('drills');
 
   // Check if we are in projector mode based on URL query parameters
   const isProjector = window.location.search.includes('mode=projector');
@@ -41,48 +43,69 @@ export default function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Billiards Control UI</h1>
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      
-      <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
-        <div style={{ width: '250px', borderRight: '1px solid #ccc', paddingRight: '20px' }}>
-          <h2>Available Drills</h2>
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            {drills.map((drill) => (
-              <li 
-                key={drill.id} 
-                onClick={() => setSelectedDrill(drill)}
-                style={{ 
-                  cursor: 'pointer', 
-                  padding: '10px',
-                  backgroundColor: selectedDrill?.id === drill.id ? '#e0f7fa' : 'transparent',
-                  fontWeight: selectedDrill?.id === drill.id ? 'bold' : 'normal',
-                  borderBottom: '1px solid #eee'
-                }}
-              >
-                {drill.title}
-              </li>
-            ))}
-            {drills.length === 0 && !error && <li>Loading drills...</li>}
-          </ul>
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          {selectedDrill ? (
-            <div>
-              <h2>{selectedDrill.title}</h2>
-              <p><strong>Category:</strong> {selectedDrill.category}</p>
-              <p><strong>Success Criteria:</strong> {selectedDrill.success_criteria as string}</p>
-              
-              <div style={{ marginTop: '30px' }}>
-                <VirtualTable layout={selectedDrill.layout} width={600} height={300} />
-              </div>
-            </div>
-          ) : (
-            <p>Please select a drill.</p>
-          )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Billiards Control UI</h1>
+        <div>
+          <button 
+            onClick={() => setUiMode('drills')} 
+            style={{ fontWeight: uiMode === 'drills' ? 'bold' : 'normal', marginRight: '10px' }}
+          >
+            Drills
+          </button>
+          <button 
+            onClick={() => setUiMode('calibration')}
+            style={{ fontWeight: uiMode === 'calibration' ? 'bold' : 'normal' }}
+          >
+            Calibration
+          </button>
         </div>
       </div>
+      
+      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      
+      {uiMode === 'drills' ? (
+        <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+          <div style={{ width: '250px', borderRight: '1px solid #ccc', paddingRight: '20px' }}>
+            <h2>Available Drills</h2>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
+              {drills.map((drill) => (
+                <li 
+                  key={drill.id} 
+                  onClick={() => setSelectedDrill(drill)}
+                  style={{ 
+                    cursor: 'pointer', 
+                    padding: '10px',
+                    backgroundColor: selectedDrill?.id === drill.id ? '#e0f7fa' : 'transparent',
+                    fontWeight: selectedDrill?.id === drill.id ? 'bold' : 'normal',
+                    borderBottom: '1px solid #eee'
+                  }}
+                >
+                  {drill.title}
+                </li>
+              ))}
+              {drills.length === 0 && !error && <li>Loading drills...</li>}
+            </ul>
+          </div>
+          
+          <div style={{ flex: 1 }}>
+            {selectedDrill ? (
+              <div>
+                <h2>{selectedDrill.title}</h2>
+                <p><strong>Category:</strong> {selectedDrill.category}</p>
+                <p><strong>Success Criteria:</strong> {selectedDrill.success_criteria as string}</p>
+                
+                <div style={{ marginTop: '30px' }}>
+                  <VirtualTable layout={selectedDrill.layout} width={600} height={300} />
+                </div>
+              </div>
+            ) : (
+              <p>Please select a drill.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <CalibrationView />
+      )}
     </div>
   );
 }

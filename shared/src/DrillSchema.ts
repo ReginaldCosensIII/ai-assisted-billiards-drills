@@ -41,3 +41,18 @@ export const DrillSchema = z.object({
 export type Drill = z.infer<typeof DrillSchema>;
 export type DrillLayout = z.infer<typeof DrillLayoutSchema>;
 export type NormalizedCoordinate = z.infer<typeof NormalizedCoordinateSchema>;
+
+export const Point2DSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+export const CalibrationCornersSchema = z.object({
+  topLeft: Point2DSchema,
+  topRight: Point2DSchema,
+  bottomRight: Point2DSchema,
+  bottomLeft: Point2DSchema,
+});
+
+export type Point2D = z.infer<typeof Point2DSchema>;
+export type CalibrationCorners = z.infer<typeof CalibrationCornersSchema>;
