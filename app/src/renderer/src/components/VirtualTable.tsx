@@ -10,17 +10,22 @@ interface Props {
 
 export default function VirtualTable({ layout, width, height }: Props) {
   // Ensure we use the 2:1 ratio for coordinate scaling
-  // The table should always be twice as wide as it is high
-  const cueScaled = scaleNormalizedCoordinate(layout.cue_ball, width, height);
+  // even if the passed props aren't perfectly 2:1.
+  const tableWidth = width;
+  const tableHeight = width / 2;
+
+  const cueScaled = scaleNormalizedCoordinate(layout.cue_ball, tableWidth, tableHeight);
 
   return (
     <div style={{ 
-      width: '100%', 
-      height: '100%', 
+      width: `${tableWidth}px`, 
+      height: `${tableHeight}px`, 
       backgroundColor: '#2e7d32', 
       position: 'relative',
       boxSizing: 'border-box',
-      border: '4px solid #1a1a1a', // Subtle dark rim for the table
+      // Using an inset shadow for the border to keep the coordinate system 
+      // exactly matching the container edges.
+      boxShadow: 'inset 0 0 0 4px #1a1a1a',
       borderRadius: '2px',
       overflow: 'hidden'
     }}>
@@ -40,7 +45,7 @@ export default function VirtualTable({ layout, width, height }: Props) {
 
       {/* Object Balls */}
       {layout.object_balls?.map((ob, idx) => {
-        const scaled = scaleNormalizedCoordinate(ob.position, width, height);
+        const scaled = scaleNormalizedCoordinate(ob.position, tableWidth, tableHeight);
         return (
           <div key={ob.id || idx} style={{
             position: 'absolute',
