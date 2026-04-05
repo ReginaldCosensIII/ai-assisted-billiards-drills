@@ -2,11 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { Drill, DrillSchema } from '@billiards/shared';
-import crypto from 'node:crypto';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function drillsRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
+  // Fetch all drills from the database
   app.get('/api/drills', {
     schema: {
       response: {
@@ -14,60 +17,55 @@ export async function drillsRoutes(fastify: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
-    const drill1: Drill = {
-      id: crypto.randomUUID(),
-      title: "Basic Cut Shot",
-      category: "cut_shot",
-      difficulty: 1,
-      table_compatibility: ["9ft"],
-      layout: {
-        cue_ball: { x: 0.5, y: 0.5 },
-        object_balls: [
-          { id: "ball-1", number: 1, position: { x: 0.5, y: 0.25 } }
-        ]
-      },
-      success_criteria: "Make the shot",
-      coaching_notes: ["Keep head down"],
-      version: "1.0",
-      author_id: crypto.randomUUID()
-    };
+    const dbDrills = await prisma.drill.findMany();
 
-    const drill2: Drill = {
-      id: crypto.randomUUID(),
-      title: "Straight In",
-      category: "position_play",
-      difficulty: 1,
-      table_compatibility: ["9ft"],
-      layout: {
-        cue_ball: { x: 0.5, y: 0.75 },
-        object_balls: [
-          { id: "ball-2", number: 2, position: { x: 0.5, y: 0.1 } }
-        ]
-      },
-      success_criteria: "Don't scratch",
-      coaching_notes: ["Perfect center ball hit"],
-      version: "1.0",
-      author_id: crypto.randomUUID()
-    };
+    // Map Prisma objects into the strict @billiards/shared schema
+    const mapped: Drill[] = dbDrills.map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      category: d.category,
+      difficulty: d.difficulty,
+      table_compatibility: d.table_compatibility,
+      layout: d.layout_data,
+      success_criteria: d.success_criteria,
+      coaching_notes: d.coaching_notes,
+      version: d.version,
+      author_id: d.author_id
+    }));
 
-    const drill3: Drill = {
-      id: crypto.randomUUID(),
-      title: "Safety Practice",
-      category: "safety",
-      difficulty: 2,
-      table_compatibility: ["9ft"],
-      layout: {
-        cue_ball: { x: 0.2, y: 0.8 },
-        object_balls: [
-          { id: "ball-3", number: 9, position: { x: 0.8, y: 0.2 } }
-        ]
-      },
-      success_criteria: "Hide the cue ball",
-      coaching_notes: ["Control the speed"],
-      version: "1.0",
-      author_id: crypto.randomUUID()
+    return mapped;
+  });
+
+  // Log an attempt outcome
+  app.post('/api/attempts', {
+    schema: {
+      body: z.object({
+        drillId: z.string().uuid(),
+        outcome: z.enum(['pass', 'fail'])
+      }),
+      response: {
+        201: z.object({
+          id: z.string(),
+          drillId: z.string(),
+          outcome: z.string(),
+          createdAt: z.string()
+        })
+      }
+    }
+  }, async (request, reply) => {
+    const { drillId, outcome } = request.body;
+
+    const attempt = await prisma.attempt.create({
+      data: {
+        drillId,
+        outcome
+      }
+    });
+
+    reply.code(201);
+    return {
+      ...attempt,
+      createdAt: attempt.createdAt.toISOString()
     };
-    
-    return [drill1, drill2, drill3];
   });
 }
