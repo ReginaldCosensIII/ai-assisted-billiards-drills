@@ -8,15 +8,32 @@ generator client {
 }
 
 model Drill {
-  id          String   @id @default(uuid())
-  title       String
-  category    String
-  difficulty  Int
-  layout_data Json
-  version     String
-  status      String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  title               String
+  category            String
+  difficulty          Int
+  table_compatibility Json
+  layout_data         Json
+  success_criteria    Json
+  coaching_notes      Json
+  version             String
+  author_id           String
+  status              String   @default("active")
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  attempts            Attempt[]
 
   @@map("drills")
+}
+
+model Attempt {
+  id         String   @id @default(uuid())
+  drillId    String
+  outcome    String   // 'pass' or 'fail'
+  createdAt  DateTime @default(now())
+
+  drill      Drill    @relation(fields: [drillId], references: [id], onDelete: Cascade)
+
+  @@map("attempts")
 }

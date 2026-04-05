@@ -26,7 +26,8 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [attempts, setAttempts] = useState<Record<string, Attempt[]>>({});
 
-  const logAttempt = useCallback((drillId: string, outcome: Outcome) => {
+  const logAttempt = useCallback(async (drillId: string, outcome: Outcome) => {
+    // Optimistically update the UI memory
     setAttempts((prev) => {
       const drillAttempts = prev[drillId] || [];
       return {
@@ -35,9 +36,20 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
       };
     });
     
-    // Trigger IPC feedback for the projector window
+    // Trigger IPC feedback for the projector window immediately
     if (window.api?.sendAttemptFeedback) {
       window.api.sendAttemptFeedback(outcome);
+    }
+
+    try {
+      // Fire-and-forget background fetch to persist to DB
+      await fetch('http://localhost:3000/api/attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drillId, outcome })
+      });
+    } catch (err) {
+      console.error('Failed to log attempt to database:', err);
     }
   }, []);
 
