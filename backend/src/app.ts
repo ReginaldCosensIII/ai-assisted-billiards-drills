@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { drillsRoutes } from './routes/drills.js';
+import { statsRoutes } from './routes/stats.js';
 
 export function buildApp() {
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>();
@@ -15,6 +16,7 @@ export function buildApp() {
   app.setSerializerCompiler(serializerCompiler);
 
   app.register(drillsRoutes);
+  app.register(statsRoutes);
 
   return app;
 }

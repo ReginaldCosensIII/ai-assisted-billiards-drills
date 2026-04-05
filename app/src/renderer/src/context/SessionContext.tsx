@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { CalibrationCorners } from '@billiards/shared';
 
 export type Outcome = 'pass' | 'fail';
 
@@ -14,20 +15,67 @@ export interface SessionStats {
   passRate: number;
 }
 
+export interface LifetimeStats {
+  drillId: string;
+  drillTitle: string;
+  totalAttempts: number;
+  passRate: number;
+}
+
 interface SessionContextType {
   attempts: Record<string, Attempt[]>;
+  calibration: CalibrationCorners;
+  lifetimeStats: LifetimeStats[];
   logAttempt: (drillId: string, outcome: Outcome) => void;
   getSessionStats: (drillId: string) => SessionStats;
+  setCalibration: (corners: CalibrationCorners) => void;
   clearSession: (drillId: string) => void;
+  refreshLifetimeStats: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
+const DEFAULT_CALIBRATION: CalibrationCorners = {
+  topLeft: { x: 0, y: 0 },
+  topRight: { x: 100, y: 0 },
+  bottomRight: { x: 100, y: 100 },
+  bottomLeft: { x: 0, y: 100 },
+};
+
 export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [attempts, setAttempts] = useState<Record<string, Attempt[]>>({});
+  const [calibration, setCalibrationState] = useState<CalibrationCorners>(DEFAULT_CALIBRATION);
+  const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats[]>([]);
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+  const refreshLifetimeStats = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/stats`);
+      if (res.ok) {
+        const data = await res.json();
+        setLifetimeStats(data.performanceByDrill);
+      }
+    } catch (err) {
+      console.error('Failed to fetch lifetime stats:', err);
+    }
+  }, [apiUrl]);
+
+  // Initial fetch of lifetime stats
+  useEffect(() => {
+    refreshLifetimeStats();
+  }, [refreshLifetimeStats]);
+
+  const setCalibration = useCallback((corners: CalibrationCorners) => {
+    setCalibrationState(corners);
+    // Sync to main process
+    if (window.api?.sendCalibrationCorners) {
+      window.api.sendCalibrationCorners(corners);
+    }
+  }, []);
 
   const logAttempt = useCallback(async (drillId: string, outcome: Outcome) => {
-    // Optimistically update the UI memory
+    // Optimistically update the UI memory (Active Session)
     setAttempts((prev) => {
       const drillAttempts = prev[drillId] || [];
       return {
@@ -42,16 +90,21 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     try {
-      // Fire-and-forget background fetch to persist to DB
-      await fetch('http://localhost:3000/api/attempts', {
+      // persist to DB
+      const res = await fetch(`${apiUrl}/api/attempts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drillId, outcome })
       });
+
+      if (res.ok) {
+        // Refresh lifetime stats to keep everything in sync
+        refreshLifetimeStats();
+      }
     } catch (err) {
       console.error('Failed to log attempt to database:', err);
     }
-  }, []);
+  }, [apiUrl, refreshLifetimeStats]);
 
   const getSessionStats = useCallback((drillId: string): SessionStats => {
     const drillAttempts = attempts[drillId] || [];
@@ -72,7 +125,16 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   return (
-    <SessionContext.Provider value={{ attempts, logAttempt, getSessionStats, clearSession }}>
+    <SessionContext.Provider value={{ 
+      attempts, 
+      calibration, 
+      lifetimeStats,
+      logAttempt, 
+      getSessionStats, 
+      setCalibration,
+      clearSession,
+      refreshLifetimeStats
+    }}>
       {children}
     </SessionContext.Provider>
   );

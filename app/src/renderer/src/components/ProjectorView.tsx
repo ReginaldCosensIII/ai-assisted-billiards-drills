@@ -58,29 +58,38 @@ export default function ProjectorView() {
     tableWidth = windowHeight * 2;
   }
 
+  // Calculate the offsets to center the 2:1 table within the arbitrary window dimensions
+  const offsetX = (windowWidth - tableWidth) / 2;
+  const offsetY = (windowHeight - tableHeight) / 2;
+
   let transformStyle: React.CSSProperties = {};
 
   if (corners) {
-    // Convert percentages to absolute pixel targets based on the projector's viewport
-    const targets = [
-      { x: (corners.topLeft.x / 100) * windowWidth, y: (corners.topLeft.y / 100) * windowHeight },
-      { x: (corners.topRight.x / 100) * windowWidth, y: (corners.topRight.y / 100) * windowHeight },
-      { x: (corners.bottomRight.x / 100) * windowWidth, y: (corners.bottomRight.y / 100) * windowHeight },
-      { x: (corners.bottomLeft.x / 100) * windowWidth, y: (corners.bottomLeft.y / 100) * windowHeight },
-    ];
+    const isDefaultCalibration = 
+      corners.topLeft.x === 0 && corners.topLeft.y === 0 &&
+      corners.topRight.x === 100 && corners.topRight.y === 0 &&
+      corners.bottomRight.x === 100 && corners.bottomRight.y === 100 &&
+      corners.bottomLeft.x === 0 && corners.bottomLeft.y === 100;
 
-    // Important: We transform based on the table's dimensions, not the full window width/height,
-    // to map the table's coordinate system correctly.
-    const matrix = calculatePerspectiveTransform(tableWidth, tableHeight, targets);
-    
-    transformStyle = {
-      transform: `matrix3d(${matrix.join(',')})`,
-      transformOrigin: '0 0',
-      // We must move the table to the absolute top-left for Calibration math context
-      position: 'absolute',
-      left: 0,
-      top: 0
-    };
+    if (!isDefaultCalibration) {
+      // Map percentages to the *centered* 2:1 mapping bounds, NOT the raw window bounds.
+      const targets = [
+        { x: offsetX + (corners.topLeft.x / 100) * tableWidth, y: offsetY + (corners.topLeft.y / 100) * tableHeight },
+        { x: offsetX + (corners.topRight.x / 100) * tableWidth, y: offsetY + (corners.topRight.y / 100) * tableHeight },
+        { x: offsetX + (corners.bottomRight.x / 100) * tableWidth, y: offsetY + (corners.bottomRight.y / 100) * tableHeight },
+        { x: offsetX + (corners.bottomLeft.x / 100) * tableWidth, y: offsetY + (corners.bottomLeft.y / 100) * tableHeight },
+      ];
+
+      const matrix = calculatePerspectiveTransform(tableWidth, tableHeight, targets);
+      
+      transformStyle = {
+        transform: `matrix3d(${matrix.join(',')})`,
+        transformOrigin: '0 0',
+        position: 'absolute',
+        left: 0,
+        top: 0
+      };
+    }
   }
 
   return (
