@@ -13,5 +13,11 @@ contextBridge.exposeInMainWorld('api', {
     const subscription = (_event: any, corners: CalibrationCorners) => callback(corners);
     ipcRenderer.on('update-calibration-corners', subscription);
     return () => ipcRenderer.removeListener('update-calibration-corners', subscription);
+  },
+  sendAttemptFeedback: (outcome: 'pass' | 'fail') => ipcRenderer.send('sync-attempt-feedback', outcome),
+  onAttemptFeedback: (callback: (outcome: 'pass' | 'fail') => void) => {
+    const subscription = (_event: any, outcome: 'pass' | 'fail') => callback(outcome);
+    ipcRenderer.on('update-attempt-feedback', subscription);
+    return () => ipcRenderer.removeListener('update-attempt-feedback', subscription);
   }
 });

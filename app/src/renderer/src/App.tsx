@@ -3,8 +3,10 @@ import { Drill } from '@billiards/shared';
 import VirtualTable from './components/VirtualTable';
 import ProjectorView from './components/ProjectorView';
 import CalibrationView from './components/CalibrationView';
+import ScoringPanel from './components/ScoringPanel';
+import { SessionProvider } from './context/SessionContext';
 
-export default function App() {
+function ControlApp() {
   const [drills, setDrills] = useState<Drill[]>([]);
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
   const [error, setError] = useState('');
@@ -89,13 +91,19 @@ export default function App() {
           
           <div style={{ flex: 1 }}>
             {selectedDrill ? (
-              <div>
-                <h2>{selectedDrill.title}</h2>
-                <p><strong>Category:</strong> {selectedDrill.category}</p>
-                <p><strong>Success Criteria:</strong> {selectedDrill.success_criteria as string}</p>
+              <div style={{ display: 'flex', gap: '40px' }}>
+                <div style={{ flex: 2 }}>
+                  <h2>{selectedDrill.title}</h2>
+                  <p><strong>Category:</strong> {selectedDrill.category}</p>
+                  <p><strong>Success Criteria:</strong> {selectedDrill.success_criteria as string}</p>
+                  
+                  <div style={{ marginTop: '30px' }}>
+                    <VirtualTable layout={selectedDrill.layout} width={600} height={300} />
+                  </div>
+                </div>
                 
-                <div style={{ marginTop: '30px' }}>
-                  <VirtualTable layout={selectedDrill.layout} width={600} height={300} />
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <ScoringPanel drillId={selectedDrill.id} />
                 </div>
               </div>
             ) : (
@@ -107,5 +115,13 @@ export default function App() {
         <CalibrationView />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <SessionProvider>
+      <ControlApp />
+    </SessionProvider>
   );
 }

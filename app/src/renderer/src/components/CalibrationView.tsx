@@ -93,7 +93,7 @@ export default function CalibrationView() {
         style={{
           position: 'relative',
           width: '600px',
-          height: '400px',
+          height: '300px',
           backgroundColor: '#222',
           border: '2px dashed #666',
           marginTop: '20px',

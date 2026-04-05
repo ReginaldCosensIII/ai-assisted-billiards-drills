@@ -80,6 +80,13 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.on('sync-attempt-feedback', (_event, outcome) => {
+    // Relay attempt feedback to the projector window
+    if (projectorWindow && !projectorWindow.isDestroyed()) {
+      projectorWindow.webContents.send('update-attempt-feedback', outcome);
+    }
+  });
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
