@@ -9,16 +9,19 @@ interface Props {
 }
 
 export default function VirtualTable({ layout, width, height }: Props) {
+  // Ensure we use the 2:1 ratio for coordinate scaling
+  // The table should always be twice as wide as it is high
   const cueScaled = scaleNormalizedCoordinate(layout.cue_ball, width, height);
 
   return (
     <div style={{ 
-      width, 
-      height, 
+      width: '100%', 
+      height: '100%', 
       backgroundColor: '#2e7d32', 
       position: 'relative',
-      border: '10px solid saddlebrown',
-      borderRadius: '5px',
+      boxSizing: 'border-box',
+      border: '4px solid #1a1a1a', // Subtle dark rim for the table
+      borderRadius: '2px',
       overflow: 'hidden'
     }}>
       {/* Cue Ball */}
