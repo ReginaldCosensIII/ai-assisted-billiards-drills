@@ -6,8 +6,11 @@ interface ScoringPanelProps {
 }
 
 export default function ScoringPanel({ drillId }: ScoringPanelProps) {
-  const { logAttempt, getSessionStats, clearSession } = useSessionStore();
+  const { logAttempt, getSessionStats, clearSession, lifetimeStats } = useSessionStore();
   const stats = getSessionStats(drillId);
+
+  // Find lifetime stats for this specific drill
+  const drillLifetime = lifetimeStats.find(s => s.drillId === drillId);
 
   return (
     <div style={{ 
@@ -17,7 +20,21 @@ export default function ScoringPanel({ drillId }: ScoringPanelProps) {
       borderRadius: '8px',
       backgroundColor: '#f9f9f9'
     }}>
-      <h3>Active Session Scoring</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h3 style={{ margin: 0 }}>Active Session Scoring</h3>
+        {drillLifetime && (
+          <div style={{ 
+            fontSize: '11px', 
+            backgroundColor: '#eee', 
+            padding: '4px 8px', 
+            borderRadius: '12px',
+            color: '#666',
+            fontWeight: 'bold'
+          }}>
+            Lifetime: {drillLifetime.passRate.toFixed(1)}% ({drillLifetime.totalAttempts} total)
+          </div>
+        )}
+      </div>
       
       <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
         <button

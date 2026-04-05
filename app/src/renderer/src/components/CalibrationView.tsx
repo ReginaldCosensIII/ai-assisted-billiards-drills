@@ -1,21 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CalibrationCorners } from '@billiards/shared';
+import { useSessionStore } from '../context/SessionContext';
 
 export default function CalibrationView() {
-  const [corners, setCorners] = useState<CalibrationCorners>({
-    topLeft: { x: 0, y: 0 },
-    topRight: { x: 100, y: 0 },
-    bottomRight: { x: 100, y: 100 },
-    bottomLeft: { x: 0, y: 100 },
-  });
-
+  const { calibration, setCalibration } = useSessionStore();
   const [activeCorner, setActiveCorner] = useState<keyof CalibrationCorners | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Sync state to Main Process via IPC
-  useEffect(() => {
-    window.api.sendCalibrationCorners(corners);
-  }, [corners]);
 
   const handlePointerDown = (e: React.PointerEvent, corner: keyof CalibrationCorners) => {
     e.preventDefault();
@@ -36,10 +26,10 @@ export default function CalibrationView() {
     x = Math.max(0, Math.min(100, x));
     y = Math.max(0, Math.min(100, y));
 
-    setCorners(prev => ({
-      ...prev,
+    setCalibration({
+      ...calibration,
       [activeCorner]: { x, y }
-    }));
+    });
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -49,7 +39,7 @@ export default function CalibrationView() {
 
   // Helper to render draggable handles
   const renderHandle = (corner: keyof CalibrationCorners, label: string) => {
-    const point = corners[corner];
+    const point = calibration[corner];
     return (
       <div
         onPointerDown={(e) => handlePointerDown(e, corner)}
@@ -106,7 +96,7 @@ export default function CalibrationView() {
         {/* The polygon visualizing the warped area */}
         <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
           <polygon 
-            points={`${corners.topLeft.x}%,${corners.topLeft.y}% ${corners.topRight.x}%,${corners.topRight.y}% ${corners.bottomRight.x}%,${corners.bottomRight.y}% ${corners.bottomLeft.x}%,${corners.bottomLeft.y}%`}
+            points={`${calibration.topLeft.x}%,${calibration.topLeft.y}% ${calibration.topRight.x}%,${calibration.topRight.y}% ${calibration.bottomRight.x}%,${calibration.bottomRight.y}% ${calibration.bottomLeft.x}%,${calibration.bottomLeft.y}%`}
             fill="rgba(0, 150, 136, 0.2)"
             stroke="#009688"
             strokeWidth="2"
@@ -120,7 +110,7 @@ export default function CalibrationView() {
       </div>
       
       <div style={{ marginTop: '20px' }}>
-        <button onClick={() => setCorners({
+        <button onClick={() => setCalibration({
           topLeft: { x: 0, y: 0 },
           topRight: { x: 100, y: 0 },
           bottomRight: { x: 100, y: 100 },
