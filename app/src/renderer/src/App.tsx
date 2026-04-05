@@ -3,6 +3,7 @@ import { Drill } from '@billiards/shared';
 import VirtualTable from './components/VirtualTable';
 import ProjectorView from './components/ProjectorView';
 import CalibrationView from './components/CalibrationView';
+import DashboardView from './components/DashboardView';
 import ScoringPanel from './components/ScoringPanel';
 import { SessionProvider } from './context/SessionContext';
 
@@ -10,7 +11,7 @@ function ControlApp() {
   const [drills, setDrills] = useState<Drill[]>([]);
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
   const [error, setError] = useState('');
-  const [uiMode, setUiMode] = useState<'drills' | 'calibration'>('drills');
+  const [uiMode, setUiMode] = useState<'drills' | 'calibration' | 'dashboard'>('drills');
 
   // Check if we are in projector mode based on URL query parameters
   const isProjector = window.location.search.includes('mode=projector');
@@ -56,9 +57,15 @@ function ControlApp() {
           </button>
           <button 
             onClick={() => setUiMode('calibration')}
-            style={{ fontWeight: uiMode === 'calibration' ? 'bold' : 'normal' }}
+            style={{ fontWeight: uiMode === 'calibration' ? 'bold' : 'normal', marginRight: '10px' }}
           >
             Calibration
+          </button>
+          <button 
+            onClick={() => setUiMode('dashboard')}
+            style={{ fontWeight: uiMode === 'dashboard' ? 'bold' : 'normal' }}
+          >
+            Dashboard
           </button>
         </div>
       </div>
@@ -111,8 +118,10 @@ function ControlApp() {
             )}
           </div>
         </div>
-      ) : (
+      ) : uiMode === 'calibration' ? (
         <CalibrationView />
+      ) : (
+        <DashboardView />
       )}
     </div>
   );
