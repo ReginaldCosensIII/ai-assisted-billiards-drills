@@ -36,6 +36,48 @@ export async function drillsRoutes(fastify: FastifyInstance) {
     return mapped;
   });
 
+  // Create a new drill
+  app.post('/api/drills', {
+    schema: {
+      body: DrillSchema.omit({ id: true }),
+      response: {
+        201: DrillSchema
+      }
+    }
+  }, async (request, reply) => {
+    const { body } = request;
+
+    const newDrill = await prisma.drill.create({
+      data: {
+        title: body.title,
+        category: body.category,
+        difficulty: body.difficulty,
+        table_compatibility: body.table_compatibility,
+        layout_data: body.layout as any,
+        success_criteria: body.success_criteria as any,
+        coaching_notes: body.coaching_notes as any,
+        version: body.version,
+        author_id: body.author_id,
+      }
+    });
+
+    const mapped: Drill = {
+      id: newDrill.id,
+      title: newDrill.title,
+      category: newDrill.category as any,
+      difficulty: newDrill.difficulty,
+      table_compatibility: newDrill.table_compatibility as any,
+      layout: newDrill.layout_data as any,
+      success_criteria: newDrill.success_criteria as any,
+      coaching_notes: newDrill.coaching_notes as any,
+      version: newDrill.version,
+      author_id: newDrill.author_id
+    };
+
+    reply.code(201);
+    return mapped;
+  });
+
   // Log an attempt outcome
   app.post('/api/attempts', {
     schema: {

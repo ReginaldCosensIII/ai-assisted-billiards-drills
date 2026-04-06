@@ -4,6 +4,7 @@ import VirtualTable from './components/VirtualTable';
 import ProjectorView from './components/ProjectorView';
 import CalibrationView from './components/CalibrationView';
 import DashboardView from './components/DashboardView';
+import CreatorView from './components/CreatorView';
 import ScoringPanel from './components/ScoringPanel';
 import { SessionProvider } from './context/SessionContext';
 
@@ -11,7 +12,10 @@ function ControlApp() {
   const [drills, setDrills] = useState<Drill[]>([]);
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
   const [error, setError] = useState('');
-  const [uiMode, setUiMode] = useState<'drills' | 'calibration' | 'dashboard'>('drills');
+  const [uiMode, setUiMode] = useState<'drills' | 'calibration' | 'dashboard' | 'creator'>('drills');
+
+  // Admin access for Creator Sandbox
+  const isAdmin = import.meta.env.DEV || window.location.search.includes('mode=admin');
 
   // Check if we are in projector mode based on URL query parameters
   const isProjector = window.location.search.includes('mode=projector');
@@ -67,6 +71,14 @@ function ControlApp() {
           >
             Dashboard
           </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setUiMode('creator')}
+              style={{ fontWeight: uiMode === 'creator' ? 'bold' : 'normal', marginLeft: '10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px' }}
+            >
+              Creator
+            </button>
+          )}
         </div>
       </div>
       
@@ -120,8 +132,10 @@ function ControlApp() {
         </div>
       ) : uiMode === 'calibration' ? (
         <CalibrationView />
-      ) : (
+      ) : uiMode === 'dashboard' ? (
         <DashboardView />
+      ) : (
+        <CreatorView />
       )}
     </div>
   );
