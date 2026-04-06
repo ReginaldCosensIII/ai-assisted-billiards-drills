@@ -79,3 +79,23 @@ If you receive a `P1000` error during `prisma db push`, it usually means the Doc
 
 ### Port 5432 Conflicts
 If you cannot connect to the database, double-check that you are using port **5433** in your connection string. If you have a native Postgres service running on 5432, it will interfere with the default Docker mapping.
+
+---
+
+## Hidden Admin Routes (Internal Tooling)
+
+Certain views, such as the **Drill Creator Sandbox**, are internal administrative tools that are hidden from the default player-facing navigation. They are gated by a `isAdmin` flag in `App.tsx`:
+
+```typescript
+const isAdmin = import.meta.env.DEV || window.location.search.includes('mode=admin');
+```
+
+### Accessing Admin Views
+
+| Method | How |
+|---|---|
+| **During Development (Automatic)** | Run `pnpm --filter app dev`. Vite sets `import.meta.env.DEV = true` automatically, so admin buttons (e.g., the red **"Creator"** button) appear in the nav without any extra steps. |
+| **On a Staging/Production Build** | Append `?mode=admin` to the app URL, e.g. `http://localhost:5173/?mode=admin`. |
+
+> [!NOTE]
+> The `?mode=admin` trigger provides **no authentication**. It is an operator-only escape hatch. See `docs/adrs/ADR-0009-hidden-admin-route-pattern.md` for the full rationale and future-auth considerations.
