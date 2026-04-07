@@ -17,9 +17,47 @@ export default function CreatorView() {
 
   const [mode, setMode] = useState<'cue_ball' | 'object_ball'>('cue_ball');
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const tableRef = useRef<HTMLDivElement>(null);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setGenerating(true);
+    setError('');
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const res = await fetch(`${apiUrl}/api/generate-drill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: aiPrompt })
+      });
+
+      if (!res.ok) throw new Error('Failed to generate drill from AI');
+      
+      const data = await res.json();
+      
+      // Update form metadata if provided
+      if (data.title) setTitle(data.title);
+      if (data.category) setCategory(data.category);
+      
+      // Update layout
+      if (data.layout) {
+        setLayout(data.layout);
+      }
+      
+      setAiPrompt('');
+      setSuccessMsg('AI generated layout successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err: any) {
+      setError(err.message || 'AI generation failed.');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (!tableRef.current) return;
@@ -128,6 +166,35 @@ export default function CreatorView() {
       <div style={{ display: 'flex', gap: '40px', marginTop: '20px' }}>
         {/* Left Side: Metadata Form */}
         <div style={{ flex: 1, minWidth: '300px' }}>
+          
+          <div style={{ padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '8px', marginBottom: '20px', border: '1px solid #bbdefb' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ✨ AI Copilot
+            </h3>
+            <textarea
+              value={aiPrompt}
+              onChange={e => setAiPrompt(e.target.value)}
+              placeholder="Describe a drill (e.g., 'A long straight stop shot from the head string...')"
+              style={{ width: '100%', padding: '8px', minHeight: '80px', marginBottom: '10px', borderRadius: '4px', border: '1px solid #90caf9' }}
+            />
+            <button
+              onClick={handleAiGenerate}
+              disabled={generating || !aiPrompt.trim()}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: generating || !aiPrompt.trim() ? '#ccc' : '#2196f3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                cursor: generating || !aiPrompt.trim() ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {generating ? 'Generating Layout...' : 'Generate with AI'}
+            </button>
+          </div>
+
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Title *</label>
             <input 
