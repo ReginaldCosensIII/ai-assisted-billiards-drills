@@ -47,7 +47,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [calibration, setCalibrationState] = useState<CalibrationCorners>(DEFAULT_CALIBRATION);
   const [lifetimeStats, setLifetimeStats] = useState<LifetimeStats[]>([]);
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3030';
 
   const refreshLifetimeStats = useCallback(async () => {
     try {

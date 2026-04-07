@@ -20,7 +20,7 @@ export default function DashboardView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3030';
     fetch(`${apiUrl}/api/stats`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);

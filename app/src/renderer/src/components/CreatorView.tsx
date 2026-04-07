@@ -22,6 +22,7 @@ export default function CreatorView() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const tableRef = useRef<HTMLDivElement>(null);
+  const hasDraggedRef = useRef(false);
 
   const [draggingBall, setDraggingBall] = useState<{ type: 'cue_ball' } | { type: 'object_ball', id: string } | null>(null);
 
@@ -52,6 +53,32 @@ export default function CreatorView() {
     let y = rawY;
 
     if (inPocketZone) {
+      const pocketLipRadius = 0.035;
+      const pocketCenters = [
+        { cx: 0, cy: 0 },
+        { cx: 1, cy: 0 },
+        { cx: 0, cy: 1 },
+        { cx: 1, cy: 1 },
+        { cx: 0.5, cy: 0 },
+        { cx: 0.5, cy: 1 }
+      ];
+
+      let nearestDist = Infinity;
+      let nearestPocket = pocketCenters[0];
+      for (const p of pocketCenters) {
+        const d = Math.sqrt(Math.pow(x - p.cx, 2) + Math.pow(y - p.cy, 2));
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearestPocket = p;
+        }
+      }
+
+      if (nearestDist < pocketLipRadius) {
+        const angle = Math.atan2(y - nearestPocket.cy, x - nearestPocket.cx);
+        x = nearestPocket.cx + pocketLipRadius * Math.cos(angle);
+        y = nearestPocket.cy + pocketLipRadius * Math.sin(angle);
+      }
+
       x = Math.max(0, Math.min(1, x));
       y = Math.max(0, Math.min(1, y));
     } else {
@@ -69,6 +96,7 @@ export default function CreatorView() {
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!draggingBall || !tableRef.current) return;
+    hasDraggedRef.current = true;
     
     const rect = tableRef.current.getBoundingClientRect();
     const rawX = (e.clientX - rect.left) / rect.width;
@@ -92,7 +120,7 @@ export default function CreatorView() {
     setError('');
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3030';
       const res = await fetch(`${apiUrl}/api/generate-drill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,6 +152,10 @@ export default function CreatorView() {
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (draggingBall) return;
+    if (hasDraggedRef.current) {
+      hasDraggedRef.current = false;
+      return;
+    }
     if (!tableRef.current) return;
     const rect = tableRef.current.getBoundingClientRect();
     
@@ -185,7 +217,7 @@ export default function CreatorView() {
     };
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3030';
       const res = await fetch(`${apiUrl}/api/drills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

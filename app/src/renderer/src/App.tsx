@@ -21,8 +21,8 @@ function ControlApp() {
   const isProjector = window.location.search.includes('mode=projector');
 
   useEffect(() => {
-    // Explicitly use VITE_API_URL or fallback to localhost:3000
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    // Explicitly use VITE_API_URL or fallback to localhost:3030
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3030';
     
     fetch(`${apiUrl}/api/drills`)
       .then((res) => {
