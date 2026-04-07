@@ -112,7 +112,7 @@ export default function ProjectorView() {
         ...transformStyle 
       }}>
         {/* The Pool Table Representation */}
-        <VirtualTable layout={layout} width={tableWidth} height={tableHeight} />
+        <VirtualTable layout={layout} width={tableWidth} height={tableHeight} displayMode="projector" />
         
         {/* Outcome Feedback Overlay */}
         <div style={{

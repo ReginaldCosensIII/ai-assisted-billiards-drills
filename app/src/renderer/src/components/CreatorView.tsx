@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Drill, DrillLayout, ObjectBallSchema } from '@billiards/shared';
 import VirtualTable from './VirtualTable';
 
@@ -22,6 +22,69 @@ export default function CreatorView() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const tableRef = useRef<HTMLDivElement>(null);
+
+  const [draggingBall, setDraggingBall] = useState<{ type: 'cue_ball' } | { type: 'object_ball', id: string } | null>(null);
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setDraggingBall(null);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  const clampPhysicsBounding = (rawX: number, rawY: number) => {
+    if (!tableRef.current) return { x: Math.max(0, Math.min(1, rawX)), y: Math.max(0, Math.min(1, rawY)) };
+    
+    const rect = tableRef.current.getBoundingClientRect();
+    const rx = 8 / rect.width;
+    const ry = 8 / rect.height;
+
+    const pocketZoneThreshold = 0.06;
+
+    const inPocketZone = 
+      (rawX < pocketZoneThreshold && rawY < pocketZoneThreshold * 2) || // TL
+      (rawX > 1 - pocketZoneThreshold && rawY < pocketZoneThreshold * 2) || // TR
+      (rawX < pocketZoneThreshold && rawY > 1 - pocketZoneThreshold * 2) || // BL
+      (rawX > 1 - pocketZoneThreshold && rawY > 1 - pocketZoneThreshold * 2) || // BR
+      (Math.abs(rawX - 0.5) < pocketZoneThreshold && rawY < pocketZoneThreshold * 2) || // Top-Mid
+      (Math.abs(rawX - 0.5) < pocketZoneThreshold && rawY > 1 - pocketZoneThreshold * 2); // Bot-Mid
+
+    let x = rawX;
+    let y = rawY;
+
+    if (inPocketZone) {
+      x = Math.max(0, Math.min(1, x));
+      y = Math.max(0, Math.min(1, y));
+    } else {
+      x = Math.max(rx, Math.min(1 - rx, x));
+      y = Math.max(ry, Math.min(1 - ry, y));
+    }
+
+    return { x, y };
+  };
+
+  const handleBallMouseDown = (e: React.MouseEvent, type: 'cue_ball' | 'object_ball', id?: string) => {
+    e.preventDefault();
+    setDraggingBall(type === 'cue_ball' ? { type } : { type, id: id! });
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!draggingBall || !tableRef.current) return;
+    
+    const rect = tableRef.current.getBoundingClientRect();
+    const rawX = (e.clientX - rect.left) / rect.width;
+    const rawY = (e.clientY - rect.top) / rect.height;
+
+    const { x, y } = clampPhysicsBounding(rawX, rawY);
+
+    if (draggingBall.type === 'cue_ball') {
+      setLayout(prev => ({ ...prev, cue_ball: { x, y } }));
+    } else if (draggingBall.type === 'object_ball') {
+      setLayout(prev => ({
+        ...prev,
+        object_balls: prev.object_balls.map(ob => ob.id === draggingBall.id ? { ...ob, position: { x, y } } : ob)
+      }));
+    }
+  };
 
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim()) return;
@@ -60,16 +123,15 @@ export default function CreatorView() {
   };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
+    if (draggingBall) return;
     if (!tableRef.current) return;
     const rect = tableRef.current.getBoundingClientRect();
     
     // Calculate normalized coordinates (0.0 to 1.0)
-    let x = (e.clientX - rect.left) / rect.width;
-    let y = (e.clientY - rect.top) / rect.height;
+    let rawX = (e.clientX - rect.left) / rect.width;
+    let rawY = (e.clientY - rect.top) / rect.height;
 
-    // Clamp
-    x = Math.max(0, Math.min(1, x));
-    y = Math.max(0, Math.min(1, y));
+    const { x, y } = clampPhysicsBounding(rawX, rawY);
 
     if (mode === 'cue_ball') {
       setLayout(prev => ({
@@ -282,12 +344,17 @@ export default function CreatorView() {
 
           <p style={{ fontSize: '14px', color: '#666' }}>Click on the table below to place the active ball. Object balls automatically number themselves 1, 2, 3...</p>
           
-          <div 
-            ref={tableRef}
-            onClick={handleCanvasClick}
-            style={{ cursor: 'crosshair', display: 'inline-block' }}
-          >
-            <VirtualTable layout={renderLayout} width={600} height={300} />
+          <div style={{ cursor: 'crosshair', display: 'inline-block' }}>
+            <VirtualTable 
+              layout={renderLayout} 
+              width={600} 
+              height={300} 
+              surfaceRef={tableRef}
+              onSurfaceClick={handleCanvasClick}
+              onSurfaceMouseMove={handleCanvasMouseMove}
+              onSurfaceMouseUp={() => setDraggingBall(null)}
+              onBallMouseDown={handleBallMouseDown}
+            />
           </div>
         </div>
       </div>
