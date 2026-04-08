@@ -6,9 +6,25 @@ interface Props {
   layout: DrillLayout;
   width: number;
   height: number;
+  displayMode?: 'ui' | 'projector';
+  surfaceRef?: React.Ref<HTMLDivElement>;
+  onSurfaceClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onSurfaceMouseMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onSurfaceMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onBallMouseDown?: (e: React.MouseEvent, type: 'cue_ball' | 'object_ball', id?: string) => void;
 }
 
-export default function VirtualTable({ layout, width, height }: Props) {
+export default function VirtualTable({ 
+  layout, 
+  width, 
+  height, 
+  displayMode = 'ui', 
+  surfaceRef, 
+  onSurfaceClick,
+  onSurfaceMouseMove,
+  onSurfaceMouseUp,
+  onBallMouseDown
+}: Props) {
   // Ensure we use the 2:1 ratio for coordinate scaling
   // even if the passed props aren't perfectly 2:1.
   const tableWidth = width;
@@ -16,21 +32,40 @@ export default function VirtualTable({ layout, width, height }: Props) {
 
   const cueScaled = scaleNormalizedCoordinate(layout.cue_ball, tableWidth, tableHeight);
 
-  return (
-    <div style={{ 
-      width: `${tableWidth}px`, 
-      height: `${tableHeight}px`, 
-      backgroundColor: '#2e7d32', 
-      position: 'relative',
-      boxSizing: 'border-box',
-      // Using an inset shadow for the border to keep the coordinate system 
-      // exactly matching the container edges.
-      boxShadow: 'inset 0 0 0 4px #1a1a1a',
-      borderRadius: '2px',
-      overflow: 'hidden'
-    }}>
+  const playingSurface = (
+    <div 
+      ref={surfaceRef}
+      onClick={onSurfaceClick}
+      onMouseMove={onSurfaceMouseMove}
+      onMouseUp={onSurfaceMouseUp}
+      style={{ 
+        width: `${tableWidth}px`, 
+        height: `${tableHeight}px`, 
+        backgroundColor: displayMode === 'ui' ? '#2e7d32' : 'transparent', 
+        position: 'relative',
+        boxSizing: 'border-box',
+        // Using an inset shadow for the border to keep the coordinate system 
+        // exactly matching the container edges.
+        boxShadow: displayMode === 'ui' ? 'inset 0 0 0 4px #1a1a1a' : 'none',
+        borderRadius: '2px',
+        overflow: 'visible', // CRITICAL: changed from hidden to allow balls to overlap cushions
+        pointerEvents: 'auto'
+      }}>
+      
+      {/* Markings */}
+      {displayMode === 'ui' && (
+        <>
+          {/* Head String */}
+          <div style={{ position: 'absolute', left: '25%', top: 0, bottom: 0, borderLeft: '1px solid rgba(255,255,255,0.2)', pointerEvents: 'none' }} />
+          {/* Foot Spot */}
+          <div style={{ position: 'absolute', left: '75%', top: '50%', width: '4px', height: '4px', backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }} />
+        </>
+      )}
+
       {/* Cue Ball */}
-      <div style={{
+      <div 
+        onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'cue_ball'); }}
+        style={{
         position: 'absolute',
         width: '16px',
         height: '16px',
@@ -40,14 +75,18 @@ export default function VirtualTable({ layout, width, height }: Props) {
         top: cueScaled.y - 8,
         border: '1px solid #ccc',
         boxShadow: '1px 1px 3px rgba(0,0,0,0.5)',
-        zIndex: 10
+        zIndex: 10,
+        cursor: 'grab'
       }} />
 
       {/* Object Balls */}
       {layout.object_balls?.map((ob, idx) => {
         const scaled = scaleNormalizedCoordinate(ob.position, tableWidth, tableHeight);
         return (
-          <div key={ob.id || idx} style={{
+          <div 
+            key={ob.id || idx} 
+            onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'object_ball', ob.id); }}
+            style={{
             position: 'absolute',
             width: '16px',
             height: '16px',
@@ -61,12 +100,63 @@ export default function VirtualTable({ layout, width, height }: Props) {
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '1px 1px 3px rgba(0,0,0,0.5)',
-            zIndex: 5
+            zIndex: 5,
+            cursor: 'grab'
           }}>
             {ob.number || ''}
           </div>
         );
       })}
+    </div>
+  );
+
+  if (displayMode === 'projector') {
+    return playingSurface;
+  }
+
+  // Draw rails and labels for UI mode
+  return (
+    <div style={{
+      position: 'relative',
+      padding: '30px',
+      backgroundColor: '#5c4033', // Dark wood color for rails
+      borderRadius: '8px',
+      display: 'inline-block',
+      boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
+      userSelect: 'none',
+      pointerEvents: 'none'
+    }}>
+      {playingSurface}
+
+      {/* Head Rail Label */}
+      <div style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translate(-50%, -50%) rotate(-90deg)', color: '#d2b48c', fontSize: '10px', fontWeight: 'bold', letterSpacing: '2px', opacity: 0.8, zIndex: 20 }}>
+        HEAD RAIL
+      </div>
+      {/* Foot Rail Label */}
+      <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translate(50%, -50%) rotate(90deg)', color: '#d2b48c', fontSize: '10px', fontWeight: 'bold', letterSpacing: '2px', opacity: 0.8, zIndex: 20 }}>
+        FOOT RAIL
+      </div>
+
+      {/* 6 Pockets */}
+      {[
+        { top: 12, left: 12 }, // Top-Left
+        { top: 12, left: 30 + tableWidth / 2 }, // Top-Middle
+        { top: 12, right: 12 }, // Top-Right
+        { bottom: 12, left: 12 }, // Bottom-Left
+        { bottom: 12, left: 30 + tableWidth / 2 }, // Bottom-Middle
+        { bottom: 12, right: 12 }, // Bottom-Right
+      ].map((pos, idx) => (
+        <div key={idx} style={{
+          position: 'absolute',
+          width: '36px',
+          height: '36px',
+          backgroundColor: '#0a0a0a',
+          borderRadius: '50%',
+          boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.9)',
+          ...pos,
+          transform: pos.left === 30 + tableWidth / 2 ? 'translateX(-50%)' : 'none'
+        }} />
+      ))}
     </div>
   );
 }
