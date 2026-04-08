@@ -16,6 +16,7 @@ model Drill {
   layout_data         Json
   success_criteria    Json
   coaching_notes      Json
+  execution           Json?
   version             String
   author_id           String
   status              String   @default("active")

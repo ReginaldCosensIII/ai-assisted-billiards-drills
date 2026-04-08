@@ -18,6 +18,17 @@ export const DrillLayoutSchema = z.object({
   obstacles: z.array(ObjectBallSchema).optional(),
 });
 
+export const SpinSchema = z.object({
+  vertical: z.number().min(-1.0).max(1.0),
+  horizontal: z.number().min(-1.0).max(1.0),
+});
+
+export const ExecutionSchema = z.object({
+  speed: z.number().min(1).max(10),
+  spin: SpinSchema,
+  elevation: z.number().min(0).max(90),
+});
+
 export const DrillSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
@@ -25,6 +36,7 @@ export const DrillSchema = z.object({
   difficulty: z.number().int().min(1).max(5),
   table_compatibility: z.array(z.string()).min(1),
   layout: DrillLayoutSchema,
+  execution: ExecutionSchema.optional(),
   success_criteria: z.union([z.string(), z.record(z.string(), z.any())]),
   coaching_notes: z.array(z.string()),
   version: z.string(),

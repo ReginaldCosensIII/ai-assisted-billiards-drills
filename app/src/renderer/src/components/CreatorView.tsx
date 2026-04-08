@@ -10,6 +10,11 @@ export default function CreatorView() {
   const [difficulty, setDifficulty] = useState<number>(1);
   const [successCriteria, setSuccessCriteria] = useState('');
   
+  const [speed, setSpeed] = useState<number>(5);
+  const [spinVertical, setSpinVertical] = useState<number>(0);
+  const [spinHorizontal, setSpinHorizontal] = useState<number>(0);
+  const [elevation, setElevation] = useState<number>(0);
+
   const [layout, setLayout] = useState<DrillLayout>({
     cue_ball: { x: -1, y: -1 }, // -1 means unplaced
     object_balls: []
@@ -135,6 +140,14 @@ export default function CreatorView() {
       if (data.title) setTitle(data.title);
       if (data.category) setCategory(data.category);
       
+      // Update execution parameters
+      if (data.execution) {
+        setSpeed(data.execution.speed ?? 5);
+        setSpinVertical(data.execution.spin?.vertical ?? 0);
+        setSpinHorizontal(data.execution.spin?.horizontal ?? 0);
+        setElevation(data.execution.elevation ?? 0);
+      }
+
       // Update layout
       if (data.layout) {
         setLayout(data.layout);
@@ -210,6 +223,14 @@ export default function CreatorView() {
       difficulty,
       table_compatibility: ['9ft'],
       layout,
+      execution: {
+        speed,
+        spin: {
+          vertical: spinVertical,
+          horizontal: spinHorizontal
+        },
+        elevation
+      },
       success_criteria: successCriteria || 'Complete the drill',
       coaching_notes: [],
       version: '1.0',
@@ -233,6 +254,10 @@ export default function CreatorView() {
       setCategory('cut_shot');
       setDifficulty(1);
       setSuccessCriteria('');
+      setSpeed(5);
+      setSpinVertical(0);
+      setSpinHorizontal(0);
+      setElevation(0);
       handleClearCanvas();
       
       setTimeout(() => setSuccessMsg(''), 3000);
@@ -322,6 +347,52 @@ export default function CreatorView() {
               value={difficulty} 
               onChange={e => setDifficulty(parseInt(e.target.value) || 1)}
               style={{ width: '100%', padding: '8px' }} 
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Speed (1-10): {speed}</label>
+            <input 
+              type="range" 
+              min="1" max="10" step="1"
+              value={speed} 
+              onChange={e => setSpeed(parseInt(e.target.value))}
+              style={{ width: '100%' }} 
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Spin (Vertical / Horizontal)</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <small>Vert ({spinVertical}): -1 (Draw) to 1 (Follow)</small>
+                <input 
+                  type="range" min="-1" max="1" step="0.1" 
+                  value={spinVertical} 
+                  onChange={e => setSpinVertical(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }} 
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <small>Horz ({spinHorizontal}): -1 (Left) to 1 (Right)</small>
+                <input 
+                  type="range" min="-1" max="1" step="0.1" 
+                  value={spinHorizontal} 
+                  onChange={e => setSpinHorizontal(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }} 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Cue Elevation (0-90°): {elevation}°</label>
+            <input 
+              type="range" 
+              min="0" max="90" step="1"
+              value={elevation} 
+              onChange={e => setElevation(parseInt(e.target.value))}
+              style={{ width: '100%' }} 
             />
           </div>
 
