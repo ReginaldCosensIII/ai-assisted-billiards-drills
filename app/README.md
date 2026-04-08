@@ -1,13 +1,10 @@
 # app/
 
-This directory will contain the desktop-first front-end application layer for the billiards drill projection platform.
+This directory contains the desktop-first front-end application layer for the AI Assisted Billiards Drill platform.
 
-## Intended Scope
+## Architecture
+- **Stack:** Electron, React, Vite
+- **UI Components:** We rely on isolated components such as `VirtualTable.tsx` for projecting drag-and-drop physics across dynamic orientations. The table features advanced mathematical radial and tangential physics clamping ensuring realistically bounded interactions before persisting to the database.
 
-- Desktop UI rendering and projection display
-- User interaction and drill session management
-- Integration with the backend layer
-
-## Current Status
-
-**Empty — Foundation stage only.** No framework has been selected yet. Framework decisions will be documented in `docs/architecture/` before any code is written here.
+## Running Locally
+See the global repository documentation for complete bootstrapping. This workspace assumes the API is running at `localhost:3030`.
