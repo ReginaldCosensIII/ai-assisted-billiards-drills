@@ -47,8 +47,14 @@ Assume a horizontal pool table.
 **Drill Categories**:
 You must categorize the shot using one of these keys: 'cut_shot', 'position_play', 'safety', 'bank', 'break'.
 
+**Execution Parameters**:
+You must infer the optimal execution intent:
+- speed: 1 to 10 (1 is incredibly soft, 10 is breaking speed).
+- spin: an object with 'vertical' (-1.0 for draw to 1.0 for follow) and 'horizontal' (-1.0 for left english to 1.0 for right english).
+- elevation: 0 to 90 degrees (typically 0-5 for level, >=30 for masse/jump).
+
 **Output Requirements**:
-Return a valid layout that perfectly matches the provided instructions. If multiple object balls are needed, number them sequentially.
+Return a valid layout that perfectly matches the provided instructions. If multiple object balls are needed, number them sequentially. Include the computed execution parameters.
 `
           },
           {
@@ -105,9 +111,27 @@ Return a valid layout that perfectly matches the provided instructions. If multi
                   },
                   required: ["cue_ball", "object_balls"],
                   additionalProperties: false
+                },
+                execution: {
+                  type: "object",
+                  properties: {
+                    speed: { type: "number" },
+                    spin: {
+                      type: "object",
+                      properties: {
+                        vertical: { type: "number" },
+                        horizontal: { type: "number" }
+                      },
+                      required: ["vertical", "horizontal"],
+                      additionalProperties: false
+                    },
+                    elevation: { type: "number" }
+                  },
+                  required: ["speed", "spin", "elevation"],
+                  additionalProperties: false
                 }
               },
-              required: ["title", "category", "layout"],
+              required: ["title", "category", "layout", "execution"],
               additionalProperties: false
             }
           }
