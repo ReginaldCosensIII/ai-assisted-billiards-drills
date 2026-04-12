@@ -11,10 +11,17 @@ export const ObjectBallSchema = z.object({
   position: NormalizedCoordinateSchema,
 });
 
+export const TargetZoneSchema = z.object({
+  id: z.string(),
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  radius: z.number().min(0.01).max(1),
+});
+
 export const DrillLayoutSchema = z.object({
   cue_ball: NormalizedCoordinateSchema,
   object_balls: z.array(ObjectBallSchema),
-  target_zones: z.array(z.any()).optional(), // Flexible mapping for early V1 layout
+  target_zones: z.array(TargetZoneSchema).optional(),
   obstacles: z.array(ObjectBallSchema).optional(),
 });
 

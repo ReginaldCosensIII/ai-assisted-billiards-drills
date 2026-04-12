@@ -20,7 +20,7 @@ export default function CreatorView() {
     object_balls: []
   });
 
-  const [mode, setMode] = useState<'cue_ball' | 'object_ball'>('cue_ball');
+  const [mode, setMode] = useState<'cue_ball' | 'object_ball' | 'target_zone'>('cue_ball');
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -194,14 +194,33 @@ export default function CreatorView() {
           ]
         };
       });
+    } else if (mode === 'target_zone') {
+      setLayout(prev => {
+        const nextId = `zone-${(prev.target_zones || []).length + 1}`;
+        return {
+          ...prev,
+          target_zones: [
+            ...(prev.target_zones || []),
+            { id: nextId, x, y, radius: 0.1 }
+          ]
+        };
+      });
     }
   };
 
   const handleClearCanvas = () => {
     setLayout({
       cue_ball: { x: -1, y: -1 },
-      object_balls: []
+      object_balls: [],
+      target_zones: []
     });
+  };
+
+  const handleClearZones = () => {
+    setLayout(prev => ({
+      ...prev,
+      target_zones: []
+    }));
   };
 
   const isValid = () => {
@@ -268,10 +287,10 @@ export default function CreatorView() {
     }
   };
 
-  // For rendering VirtualTable safely since cue_ball might be unplaced
   const renderLayout: DrillLayout = {
     cue_ball: layout.cue_ball.x !== -1 ? layout.cue_ball : { x: -100, y: -100 }, // move offscreen if unplaced
-    object_balls: layout.object_balls
+    object_balls: layout.object_balls,
+    target_zones: layout.target_zones
   };
 
   return (
@@ -436,13 +455,25 @@ export default function CreatorView() {
               <input type="radio" checked={mode === 'object_ball'} onChange={() => setMode('object_ball')} />
               🔴 Object Ball
             </label>
+            <label>
+              <input type="radio" checked={mode === 'target_zone'} onChange={() => setMode('target_zone')} />
+              🎯 Target Zone
+            </label>
 
-            <button 
-              onClick={handleClearCanvas}
-              style={{ marginLeft: 'auto', padding: '6px 12px', cursor: 'pointer', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px' }}
-            >
-              Clear Canvas
-            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={handleClearZones}
+                style={{ padding: '6px 12px', cursor: 'pointer', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px' }}
+              >
+                Clear Zones
+              </button>
+              <button 
+                onClick={handleClearCanvas}
+                style={{ padding: '6px 12px', cursor: 'pointer', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px' }}
+              >
+                Clear Canvas
+              </button>
+            </div>
           </div>
 
           <p style={{ fontSize: '14px', color: '#666' }}>Click on the table below to place the active ball. Object balls automatically number themselves 1, 2, 3...</p>

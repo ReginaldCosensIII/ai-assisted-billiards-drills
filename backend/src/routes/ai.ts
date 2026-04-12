@@ -47,6 +47,9 @@ Assume a horizontal pool table.
 **Drill Categories**:
 You must categorize the shot using one of these keys: 'cut_shot', 'position_play', 'safety', 'bank', 'break'.
 
+**Target Zones**:
+If the user asks for "positional play", "shape", or specifies where the cue ball should land after the shot, you must generate a `target_zones` array. A target zone requires: `id` (string), `x` (number), `y` (number), and `radius` (number, typically 0.05 to 0.15).
+
 **Execution Parameters**:
 You must infer the optimal execution intent:
 - speed: 1 to 10 (1 is incredibly soft, 10 is breaking speed).
@@ -105,6 +108,20 @@ Return a valid layout that perfectly matches the provided instructions. If multi
                           }
                         },
                         required: ["id", "number", "position"],
+                        additionalProperties: false
+                      }
+                    },
+                    target_zones: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          x: { type: "number" },
+                          y: { type: "number" },
+                          radius: { type: "number" }
+                        },
+                        required: ["id", "x", "y", "radius"],
                         additionalProperties: false
                       }
                     }
