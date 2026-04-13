@@ -48,7 +48,7 @@ Assume a horizontal pool table.
 You must categorize the shot using one of these keys: 'cut_shot', 'position_play', 'safety', 'bank', 'break'.
 
 **Target Zones**:
-If the user asks for "positional play", "shape", or specifies where the cue ball should land after the shot, you must generate a `target_zones` array. A target zone requires: `id` (string), `x` (number), `y` (number), and `radius` (number, typically 0.05 to 0.15).
+If the user asks for "positional play", "shape", or specifies where the cue ball should land after the shot, you must generate a 'target_zones' array. A target zone requires: 'id' (string), 'x' (number), 'y' (number), and 'radius' (number, typically 0.05 to 0.15).
 
 **Execution Parameters**:
 You must infer the optimal execution intent:
