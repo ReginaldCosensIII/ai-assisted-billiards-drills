@@ -107,6 +107,29 @@ export default function VirtualTable({
           </div>
         );
       })}
+
+      {/* Target Zones */}
+      {layout.target_zones?.map((zone, idx) => {
+        const scaled = scaleNormalizedCoordinate({ x: zone.x, y: zone.y }, tableWidth, tableHeight);
+        const radiusPx = zone.radius * tableWidth;
+        return (
+          <div 
+            key={zone.id || idx}
+            style={{
+              position: 'absolute',
+              width: `${radiusPx * 2}px`,
+              height: `${radiusPx * 2}px`,
+              backgroundColor: 'rgba(0, 0, 255, 0.2)',
+              border: '2px dashed rgba(0, 0, 255, 0.5)',
+              borderRadius: '50%',
+              left: scaled.x - radiusPx,
+              top: scaled.y - radiusPx,
+              pointerEvents: 'none',
+              zIndex: 1
+            }}
+          />
+        );
+      })}
     </div>
   );
 
