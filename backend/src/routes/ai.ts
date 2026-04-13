@@ -51,7 +51,11 @@ You must categorize the shot using one of these keys: 'cut_shot', 'position_play
 If the user asks for "positional play", "shape", or specifies where the cue ball should land after the shot, you must generate a 'target_zones' array. A target zone requires: 'id' (string), 'x' (number), 'y' (number), and 'radius' (number, typically 0.05 to 0.15).
 
 **Trajectories**:
-You must generate a 'trajectories' array illustrating the paths of the balls. A trajectory requires: 'id' (string), 'type' ("cue_ball" | "object_ball" | "ghost_ball"), and 'path' (array of {x: number, y: number}). Generate trajectories connecting the cue ball to the object ball, and the object ball to the pocket (or rail).
+You must generate a 'trajectories' array illustrating the paths of the balls. A trajectory requires: 'id' (string), 'type' ("cue_ball" | "object_ball" | "ghost_ball"), and 'path' (array of {x: number, y: number}). 
+When generating trajectories, you must provide a minimum of two points per path. 
+- For a Cue Ball path: Point 1 is the cue ball (x, y), Point 2 is the impact point/ghost ball (x, y).
+- For an Object Ball path: Point 1 is the object ball (x, y), Point 2 is the target pocket (x, y).
+- Use 'cue_ball' and 'object_ball' types for the trajectory objects.
 
 **Execution Parameters**:
 You must infer the optimal execution intent:
@@ -153,7 +157,7 @@ Return a valid layout that perfectly matches the provided instructions. If multi
                       }
                     }
                   },
-                  required: ["cue_ball", "object_balls"],
+                  required: ["cue_ball", "object_balls", "target_zones", "trajectories"],
                   additionalProperties: false
                 },
                 execution: {
