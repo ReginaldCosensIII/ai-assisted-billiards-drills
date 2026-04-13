@@ -62,6 +62,40 @@ export default function VirtualTable({
         </>
       )}
 
+      {/* Trajectories */}
+      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}>
+        {layout.trajectories?.map((traj, idx) => {
+          const points = traj.path.map(p => {
+             const scaled = scaleNormalizedCoordinate(p, tableWidth, tableHeight);
+             return `${scaled.x},${scaled.y}`;
+          }).join(' ');
+          
+          let stroke = '#ffffff';
+          let strokeDasharray = 'none';
+          
+          if (traj.type === 'cue_ball') {
+             stroke = 'white';
+             strokeDasharray = '5, 5';
+          } else if (traj.type === 'object_ball') {
+             stroke = 'rgba(255, 0, 0, 0.8)';
+          } else if (traj.type === 'ghost_ball') {
+             stroke = 'rgba(255, 255, 255, 0.5)';
+             strokeDasharray = '2, 2';
+          }
+
+          return (
+             <polyline
+               key={traj.id || idx}
+               points={points}
+               fill="none"
+               stroke={stroke}
+               strokeWidth="2"
+               strokeDasharray={strokeDasharray}
+             />
+          );
+        })}
+      </svg>
+
       {/* Cue Ball */}
       <div 
         onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'cue_ball'); }}
