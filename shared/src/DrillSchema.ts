@@ -18,11 +18,22 @@ export const TargetZoneSchema = z.object({
   radius: z.number().min(0.01).max(1),
 });
 
+export const TrajectorySchema = z.object({
+  id: z.string(),
+  type: z.enum(['cue_ball', 'object_ball', 'ghost_ball']),
+  path: z.array(z.object({
+    x: z.number(),
+    y: z.number(),
+  })),
+});
+
+
 export const DrillLayoutSchema = z.object({
   cue_ball: NormalizedCoordinateSchema,
   object_balls: z.array(ObjectBallSchema),
   target_zones: z.array(TargetZoneSchema).optional(),
   obstacles: z.array(ObjectBallSchema).optional(),
+  trajectories: z.array(TrajectorySchema).optional(),
 });
 
 export const SpinSchema = z.object({
