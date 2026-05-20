@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Drill, DrillLayout, ObjectBallSchema } from '@billiards/shared';
+import { Drill, DrillLayout, ObjectBallSchema, NormalizedCoordinate } from '@billiards/shared';
 import VirtualTable from './VirtualTable';
+import { checkBallCollision } from '../utils/coordinate-math';
 
 type OmitId<T> = Omit<T, 'id'>;
 
@@ -29,13 +30,63 @@ export default function CreatorView() {
   const tableRef = useRef<HTMLDivElement>(null);
   const hasDraggedRef = useRef(false);
 
-  const [draggingBall, setDraggingBall] = useState<{ type: 'cue_ball' } | { type: 'object_ball', id: string } | null>(null);
+  const [draggingBall, setDraggingBall] = useState<{ type: 'cue_ball' | 'object_ball', id?: string, startX: number, startY: number } | null>(null);
+  const [activeEntity, setActiveEntity] = useState<{ type: 'cue_ball' } | { type: 'object_ball', id: string } | null>(null);
+  const [hoverCoords, setHoverCoords] = useState<NormalizedCoordinate | null>(null);
+  const [hoverCollision, setHoverCollision] = useState(false);
 
   useEffect(() => {
-    const handleGlobalMouseUp = () => setDraggingBall(null);
+    setHoverCoords(null);
+    setHoverCollision(false);
+  }, [mode]);
+
+  useEffect(() => {
+    if (!draggingBall || !tableRef.current) return;
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!tableRef.current) return;
+      const rect = tableRef.current.getBoundingClientRect();
+      const rawX = (e.clientX - rect.left) / rect.width;
+      const rawY = (e.clientY - rect.top) / rect.height;
+
+      const { x, y } = clampPhysicsBounding(rawX, rawY);
+      
+      const distance = Math.hypot(e.clientX - draggingBall.startX, e.clientY - draggingBall.startY);
+      if (distance >= 4) {
+        hasDraggedRef.current = true;
+      }
+
+      if (draggingBall.type === 'cue_ball') {
+        setLayout(prev => ({ ...prev, cue_ball: { x, y } }));
+      } else if (draggingBall.type === 'object_ball') {
+        setLayout(prev => ({
+          ...prev,
+          object_balls: prev.object_balls.map(ob => ob.id === draggingBall.id ? { ...ob, position: { x, y } } : ob)
+        }));
+      }
+    };
+
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      const distance = Math.hypot(e.clientX - draggingBall.startX, e.clientY - draggingBall.startY);
+      if (distance < 4) {
+        // Selection Click!
+        if (draggingBall.type === 'cue_ball') {
+          setActiveEntity({ type: 'cue_ball' });
+        } else if (draggingBall.type === 'object_ball' && draggingBall.id) {
+          setActiveEntity({ type: 'object_ball', id: draggingBall.id });
+        }
+      }
+      setDraggingBall(null);
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, []);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [draggingBall]);
 
   const clampPhysicsBounding = (rawX: number, rawY: number) => {
     if (!tableRef.current) return { x: Math.max(0, Math.min(1, rawX)), y: Math.max(0, Math.min(1, rawY)) };
@@ -96,12 +147,18 @@ export default function CreatorView() {
 
   const handleBallMouseDown = (e: React.MouseEvent, type: 'cue_ball' | 'object_ball', id?: string) => {
     e.preventDefault();
-    setDraggingBall(type === 'cue_ball' ? { type } : { type, id: id! });
+    e.stopPropagation();
+    setDraggingBall({
+      type,
+      id,
+      startX: e.clientX,
+      startY: e.clientY
+    });
+    hasDraggedRef.current = false;
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!draggingBall || !tableRef.current) return;
-    hasDraggedRef.current = true;
+    if (!tableRef.current) return;
     
     const rect = tableRef.current.getBoundingClientRect();
     const rawX = (e.clientX - rect.left) / rect.width;
@@ -109,13 +166,17 @@ export default function CreatorView() {
 
     const { x, y } = clampPhysicsBounding(rawX, rawY);
 
-    if (draggingBall.type === 'cue_ball') {
-      setLayout(prev => ({ ...prev, cue_ball: { x, y } }));
-    } else if (draggingBall.type === 'object_ball') {
-      setLayout(prev => ({
-        ...prev,
-        object_balls: prev.object_balls.map(ob => ob.id === draggingBall.id ? { ...ob, position: { x, y } } : ob)
-      }));
+    if (draggingBall) {
+      return;
+    }
+
+    if (mode === 'cue_ball' || mode === 'object_ball') {
+      setHoverCoords({ x, y });
+      const collides = checkBallCollision({ x, y }, layout, mode, rect.width, rect.height);
+      setHoverCollision(collides);
+    } else {
+      setHoverCoords(null);
+      setHoverCollision(false);
     }
   };
 
@@ -169,6 +230,9 @@ export default function CreatorView() {
       hasDraggedRef.current = false;
       return;
     }
+    
+    setActiveEntity(null);
+
     if (!tableRef.current) return;
     const rect = tableRef.current.getBoundingClientRect();
     
@@ -177,6 +241,13 @@ export default function CreatorView() {
     let rawY = (e.clientY - rect.top) / rect.height;
 
     const { x, y } = clampPhysicsBounding(rawX, rawY);
+
+    if (mode === 'cue_ball' || mode === 'object_ball') {
+      const collides = checkBallCollision({ x, y }, layout, mode, rect.width, rect.height);
+      if (collides) {
+        return;
+      }
+    }
 
     if (mode === 'cue_ball') {
       setLayout(prev => ({
@@ -488,6 +559,11 @@ export default function CreatorView() {
               onSurfaceMouseMove={handleCanvasMouseMove}
               onSurfaceMouseUp={() => setDraggingBall(null)}
               onBallMouseDown={handleBallMouseDown}
+              onSurfaceMouseLeave={() => { setHoverCoords(null); setHoverCollision(false); }}
+              activeEntity={activeEntity}
+              hoverCoords={hoverCoords}
+              hoverMode={mode === 'cue_ball' || mode === 'object_ball' ? mode : null}
+              hoverCollision={hoverCollision}
             />
           </div>
         </div>

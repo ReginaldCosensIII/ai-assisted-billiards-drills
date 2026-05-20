@@ -12,6 +12,11 @@ interface Props {
   onSurfaceMouseMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onSurfaceMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onBallMouseDown?: (e: React.MouseEvent, type: 'cue_ball' | 'object_ball', id?: string) => void;
+  onSurfaceMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  activeEntity?: { type: 'cue_ball' } | { type: 'object_ball', id: string } | null;
+  hoverCoords?: { x: number; y: number } | null;
+  hoverMode?: 'cue_ball' | 'object_ball' | null;
+  hoverCollision?: boolean;
 }
 
 export default function VirtualTable({ 
@@ -23,7 +28,12 @@ export default function VirtualTable({
   onSurfaceClick,
   onSurfaceMouseMove,
   onSurfaceMouseUp,
-  onBallMouseDown
+  onBallMouseDown,
+  onSurfaceMouseLeave,
+  activeEntity = null,
+  hoverCoords = null,
+  hoverMode = null,
+  hoverCollision = false
 }: Props) {
   // Ensure we use the 2:1 ratio for coordinate scaling
   // even if the passed props aren't perfectly 2:1.
@@ -32,12 +42,46 @@ export default function VirtualTable({
 
   const cueScaled = scaleNormalizedCoordinate(layout.cue_ball, tableWidth, tableHeight);
 
+  // Get active ball position for selection ring rendering
+  const activeScaled = activeEntity ? (
+    activeEntity.type === 'cue_ball' 
+      ? cueScaled 
+      : (() => {
+          const activeOb = layout.object_balls.find(ob => ob.id === activeEntity.id);
+          return activeOb ? scaleNormalizedCoordinate(activeOb.position, tableWidth, tableHeight) : null;
+        })()
+  ) : null;
+
+  const selectionPulseStyle = `
+    @keyframes selection-pulse {
+      0% {
+        r: 10px;
+        opacity: 0.6;
+        stroke-width: 3px;
+      }
+      50% {
+        r: 12px;
+        opacity: 1;
+        stroke-width: 5.5px;
+      }
+      100% {
+        r: 10px;
+        opacity: 0.6;
+        stroke-width: 3px;
+      }
+    }
+    .selection-ring-active {
+      animation: selection-pulse 1.5s infinite ease-in-out;
+    }
+  `;
+
   const playingSurface = (
     <div 
       ref={surfaceRef}
       onClick={onSurfaceClick}
       onMouseMove={onSurfaceMouseMove}
       onMouseUp={onSurfaceMouseUp}
+      onMouseLeave={onSurfaceMouseLeave}
       style={{ 
         width: `${tableWidth}px`, 
         height: `${tableHeight}px`, 
@@ -51,6 +95,7 @@ export default function VirtualTable({
         overflow: 'visible', // CRITICAL: changed from hidden to allow balls to overlap cushions
         pointerEvents: 'auto'
       }}>
+      <style dangerouslySetInnerHTML={{ __html: selectionPulseStyle }} />
       
       {/* Markings */}
       {displayMode === 'ui' && (
@@ -62,8 +107,8 @@ export default function VirtualTable({
         </>
       )}
 
-      {/* Trajectories */}
-      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}>
+      {/* Trajectories and Overlays */}
+      <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 12 }}>
         {layout.trajectories?.map((traj, idx) => {
           const points = traj.path.map(p => {
              const scaled = scaleNormalizedCoordinate(p, tableWidth, tableHeight);
@@ -94,11 +139,25 @@ export default function VirtualTable({
              />
           );
         })}
+
+        {/* Selection Ring Overlay - rendered on top of balls inside zIndex 12 SVG */}
+        {activeScaled && (
+          <circle
+            cx={activeScaled.x}
+            cy={activeScaled.y}
+            r={10}
+            fill="none"
+            stroke="#39FF14"
+            strokeWidth={4}
+            className="selection-ring-active"
+          />
+        )}
       </svg>
 
       {/* Cue Ball */}
       <div 
         onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'cue_ball'); }}
+        onClick={(e) => e.stopPropagation()}
         style={{
         position: 'absolute',
         width: '16px',
@@ -120,6 +179,7 @@ export default function VirtualTable({
           <div 
             key={ob.id || idx} 
             onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'object_ball', ob.id); }}
+            onClick={(e) => e.stopPropagation()}
             style={{
             position: 'absolute',
             width: '16px',
@@ -141,6 +201,36 @@ export default function VirtualTable({
           </div>
         );
       })}
+
+      {/* Ghost Hover Preview */}
+      {hoverCoords && hoverMode && (() => {
+        const hoverScaled = scaleNormalizedCoordinate(hoverCoords, tableWidth, tableHeight);
+        const isCueBall = hoverMode === 'cue_ball';
+        const nextNumber = layout.object_balls.length + 1;
+        return (
+          <div style={{
+            position: 'absolute',
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            left: hoverScaled.x - 8,
+            top: hoverScaled.y - 8,
+            backgroundColor: hoverCollision ? '#FF1744' : (isCueBall ? '#ffffff' : 'red'),
+            border: hoverCollision ? '2px solid #FF1744' : '1px dashed #ccc',
+            boxShadow: hoverCollision ? '0 0 12px #FF1744' : '0 0 4px rgba(255,255,255,0.3)',
+            opacity: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isCueBall ? 'black' : 'white',
+            fontSize: '10px',
+            pointerEvents: 'none',
+            zIndex: 15
+          }}>
+            {!isCueBall && nextNumber}
+          </div>
+        );
+      })()}
 
       {/* Target Zones */}
       {layout.target_zones?.map((zone, idx) => {
