@@ -17,6 +17,7 @@ interface Props {
   hoverCoords?: { x: number; y: number } | null;
   hoverMode?: 'cue_ball' | 'object_ball' | null;
   hoverCollision?: boolean;
+  onBallClick?: (type: 'cue_ball' | 'object_ball', id?: string) => void;
 }
 
 export default function VirtualTable({ 
@@ -33,7 +34,8 @@ export default function VirtualTable({
   activeEntity = null,
   hoverCoords = null,
   hoverMode = null,
-  hoverCollision = false
+  hoverCollision = false,
+  onBallClick
 }: Props) {
   // Ensure we use the 2:1 ratio for coordinate scaling
   // even if the passed props aren't perfectly 2:1.
@@ -157,7 +159,7 @@ export default function VirtualTable({
       {/* Cue Ball */}
       <div 
         onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'cue_ball'); }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onBallClick?.('cue_ball'); }}
         style={{
         position: 'absolute',
         width: '16px',
@@ -179,7 +181,7 @@ export default function VirtualTable({
           <div 
             key={ob.id || idx} 
             onMouseDown={(e) => { e.stopPropagation(); onBallMouseDown?.(e, 'object_ball', ob.id); }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onBallClick?.('object_ball', ob.id); }}
             style={{
             position: 'absolute',
             width: '16px',

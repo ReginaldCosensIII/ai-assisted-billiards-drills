@@ -67,15 +67,6 @@ export default function CreatorView() {
     };
 
     const handleGlobalMouseUp = (e: MouseEvent) => {
-      const distance = Math.hypot(e.clientX - draggingBall.startX, e.clientY - draggingBall.startY);
-      if (distance < 4) {
-        // Selection Click!
-        if (draggingBall.type === 'cue_ball') {
-          setActiveEntity({ type: 'cue_ball' });
-        } else if (draggingBall.type === 'object_ball' && draggingBall.id) {
-          setActiveEntity({ type: 'object_ball', id: draggingBall.id });
-        }
-      }
       setDraggingBall(null);
     };
 
@@ -155,6 +146,14 @@ export default function CreatorView() {
       startY: e.clientY
     });
     hasDraggedRef.current = false;
+  };
+
+  const handleBallClick = (type: 'cue_ball' | 'object_ball', id?: string) => {
+    if (hasDraggedRef.current) {
+      hasDraggedRef.current = false;
+      return;
+    }
+    setActiveEntity(type === 'cue_ball' ? { type } : { type, id: id! });
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -559,6 +558,7 @@ export default function CreatorView() {
               onSurfaceMouseMove={handleCanvasMouseMove}
               onSurfaceMouseUp={() => setDraggingBall(null)}
               onBallMouseDown={handleBallMouseDown}
+              onBallClick={handleBallClick}
               onSurfaceMouseLeave={() => { setHoverCoords(null); setHoverCollision(false); }}
               activeEntity={activeEntity}
               hoverCoords={hoverCoords}
