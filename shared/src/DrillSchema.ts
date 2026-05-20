@@ -9,6 +9,7 @@ export const ObjectBallSchema = z.object({
   id: z.string(),
   number: z.number().optional(),
   position: NormalizedCoordinateSchema,
+  targetId: z.string().optional(),
 });
 
 export const TargetZoneSchema = z.object({

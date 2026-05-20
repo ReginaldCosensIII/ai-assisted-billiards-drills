@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { scaleNormalizedCoordinate, checkBallCollision } from './coordinate-math';
+import { scaleNormalizedCoordinate, checkBallCollision, calculateGhostBall } from './coordinate-math';
 
 describe('scaleNormalizedCoordinate', () => {
   it('scales 0,0 correctly to bounds', () => {
@@ -53,6 +53,36 @@ describe('checkBallCollision', () => {
 
   it('does not collide with cue_ball when placing cue_ball itself', () => {
     expect(checkBallCollision({ x: 0.25, y: 0.5 }, layout, 'cue_ball', 600, 300)).toBe(false);
+  });
+});
+
+describe('calculateGhostBall', () => {
+  it('calculates straight shot ghost ball correctly in pixel space', () => {
+    // OB at 0.5, 0.5 (scaled 300, 150)
+    // Target at 0.8, 0.5 (scaled 480, 150)
+    // Vector target -> OB: dx = -180, dy = 0.
+    // Unit vector: ux = -1, uy = 0.
+    // GB center: OB + diameter * ux = (300 - 16, 150) = (284, 150).
+    // Normalized back: 284/600 = 0.47333333333333333, 150/300 = 0.5.
+    const ob = { x: 0.5, y: 0.5 };
+    const target = { x: 0.8, y: 0.5 };
+    const gb = calculateGhostBall(ob, target, 8, 600, 300);
+    expect(gb.x).toBeCloseTo(284 / 600, 5);
+    expect(gb.y).toBeCloseTo(0.5, 5);
+  });
+
+  it('calculates angled shot ghost ball correctly', () => {
+    // OB at 0.5, 0.5 (300, 150)
+    // Target at 0.5, 0.9 (300, 270)
+    // Vector target -> OB: dx = 0, dy = -120.
+    // Unit vector: ux = 0, uy = -1.
+    // GB center: OB + 16 * uy = (300, 150 - 16) = (300, 134).
+    // Normalized back: 300/600 = 0.5, 134/300 = 0.44666666666666666
+    const ob = { x: 0.5, y: 0.5 };
+    const target = { x: 0.5, y: 0.9 };
+    const gb = calculateGhostBall(ob, target, 8, 600, 300);
+    expect(gb.x).toBeCloseTo(0.5, 5);
+    expect(gb.y).toBeCloseTo(134 / 300, 5);
   });
 });
 

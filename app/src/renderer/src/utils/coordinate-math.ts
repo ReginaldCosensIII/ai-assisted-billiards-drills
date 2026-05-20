@@ -62,3 +62,43 @@ export function checkBallCollision(
   return false;
 }
 
+/**
+ * Calculates the exact mathematical Ghost Ball coordinate.
+ * The Ghost Ball is placed at a distance of 2 * ballRadius (one ball diameter)
+ * from the Object Ball center, along the line pointing from the Target Center
+ * through the Object Ball Center.
+ */
+export function calculateGhostBall(
+  obCoords: NormalizedCoordinate,
+  targetCoords: NormalizedCoordinate,
+  ballRadius: number,
+  width: number,
+  height: number
+): NormalizedCoordinate {
+  const obPx = { x: obCoords.x * width, y: obCoords.y * height };
+  const targetPx = { x: targetCoords.x * width, y: targetCoords.y * height };
+
+  const dx = obPx.x - targetPx.x;
+  const dy = obPx.y - targetPx.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance === 0) {
+    return { x: obCoords.x, y: obCoords.y };
+  }
+
+  const ux = dx / distance;
+  const uy = dy / distance;
+
+  // Extend past OB by one ball diameter (2 * ballRadius)
+  const diameter = 2 * ballRadius;
+  const gbPx = {
+    x: obPx.x + ux * diameter,
+    y: obPx.y + uy * diameter
+  };
+
+  return {
+    x: gbPx.x / width,
+    y: gbPx.y / height
+  };
+}
+

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DrillLayout } from '@billiards/shared';
-import { scaleNormalizedCoordinate } from '../utils/coordinate-math';
+import { scaleNormalizedCoordinate, calculateGhostBall } from '../utils/coordinate-math';
 
 interface Props {
   layout: DrillLayout;
@@ -18,6 +18,7 @@ interface Props {
   hoverMode?: 'cue_ball' | 'object_ball' | null;
   hoverCollision?: boolean;
   onBallClick?: (type: 'cue_ball' | 'object_ball', id?: string) => void;
+  onZoneClick?: (zoneId: string) => void;
 }
 
 export default function VirtualTable({ 
@@ -35,7 +36,8 @@ export default function VirtualTable({
   hoverCoords = null,
   hoverMode = null,
   hoverCollision = false,
-  onBallClick
+  onBallClick,
+  onZoneClick
 }: Props) {
   // Ensure we use the 2:1 ratio for coordinate scaling
   // even if the passed props aren't perfectly 2:1.
@@ -53,6 +55,25 @@ export default function VirtualTable({
           return activeOb ? scaleNormalizedCoordinate(activeOb.position, tableWidth, tableHeight) : null;
         })()
   ) : null;
+
+  // Find linked ghost balls
+  const ghostBalls = (layout.object_balls || [])
+    .map(ob => {
+      if (!ob.targetId) return null;
+      const targetZone = (layout.target_zones || []).find(tz => tz.id === ob.targetId);
+      if (!targetZone) return null;
+      
+      // Calculate normalized GB coordinate
+      const gbCoords = calculateGhostBall(ob.position, { x: targetZone.x, y: targetZone.y }, 8, tableWidth, tableHeight);
+      const scaledGb = scaleNormalizedCoordinate(gbCoords, tableWidth, tableHeight);
+      
+      return {
+        id: `gb-${ob.id}`,
+        x: scaledGb.x,
+        y: scaledGb.y
+      };
+    })
+    .filter((gb): gb is { id: string; x: number; y: number } => gb !== null);
 
   const selectionPulseStyle = `
     @keyframes selection-pulse {
@@ -74,6 +95,27 @@ export default function VirtualTable({
     }
     .selection-ring-active {
       animation: selection-pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes ghost-pulse {
+      0% {
+        r: 8px;
+        opacity: 0.4;
+        stroke-width: 2px;
+      }
+      50% {
+        r: 11px;
+        opacity: 0.8;
+        stroke-width: 3px;
+      }
+      100% {
+        r: 8px;
+        opacity: 0.4;
+        stroke-width: 2px;
+      }
+    }
+    .ghost-ring-pulse {
+      animation: ghost-pulse 2s infinite ease-in-out;
     }
   `;
 
@@ -141,6 +183,31 @@ export default function VirtualTable({
              />
           );
         })}
+
+        {/* Ghost Balls */}
+        {ghostBalls.map(gb => (
+          <g key={gb.id}>
+            {/* The ghost ball physical shape (dashed/translucent white) */}
+            <circle
+              cx={gb.x}
+              cy={gb.y}
+              r={8}
+              fill="rgba(255, 255, 255, 0.12)"
+              stroke="rgba(255, 255, 255, 0.4)"
+              strokeWidth="1.5"
+              strokeDasharray="3, 3"
+            />
+            {/* The slow rhythmic pulsing outer impact ring (neon cyan) */}
+            <circle
+              cx={gb.x}
+              cy={gb.y}
+              r={8}
+              fill="none"
+              stroke="#00FFFF"
+              className="ghost-ring-pulse"
+            />
+          </g>
+        ))}
 
         {/* Selection Ring Overlay - rendered on top of balls inside zIndex 12 SVG */}
         {activeScaled && (
@@ -241,16 +308,18 @@ export default function VirtualTable({
         return (
           <div 
             key={zone.id || idx}
+            onClick={(e) => { e.stopPropagation(); onZoneClick?.(zone.id); }}
             style={{
               position: 'absolute',
               width: `${radiusPx * 2}px`,
               height: `${radiusPx * 2}px`,
-              backgroundColor: 'rgba(0, 0, 255, 0.2)',
-              border: '2px dashed rgba(0, 0, 255, 0.5)',
+              backgroundColor: 'rgba(255, 191, 0, 0.2)',
+              border: '2px dashed #FFBF00',
               borderRadius: '50%',
               left: scaled.x - radiusPx,
               top: scaled.y - radiusPx,
-              pointerEvents: 'none',
+              pointerEvents: 'auto',
+              cursor: 'pointer',
               zIndex: 1
             }}
           />

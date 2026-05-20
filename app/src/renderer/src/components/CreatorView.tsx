@@ -156,6 +156,19 @@ export default function CreatorView() {
     setActiveEntity(type === 'cue_ball' ? { type } : { type, id: id! });
   };
 
+  const handleZoneClick = (zoneId: string) => {
+    if (activeEntity?.type === 'object_ball') {
+      setLayout(prev => ({
+        ...prev,
+        object_balls: prev.object_balls.map(ob => 
+          ob.id === activeEntity.id 
+            ? { ...ob, targetId: zoneId } 
+            : ob
+        )
+      }));
+    }
+  };
+
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!tableRef.current) return;
     
@@ -559,6 +572,7 @@ export default function CreatorView() {
               onSurfaceMouseUp={() => setDraggingBall(null)}
               onBallMouseDown={handleBallMouseDown}
               onBallClick={handleBallClick}
+              onZoneClick={handleZoneClick}
               onSurfaceMouseLeave={() => { setHoverCoords(null); setHoverCollision(false); }}
               activeEntity={activeEntity}
               hoverCoords={hoverCoords}
